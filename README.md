@@ -11,8 +11,8 @@ Ingestion → Classification → Summarization → Delivery
 
 **Components:**
 - `heartbeat.py` → orchestrator
-- `heartbeat_app/intelligence/classifier.py` → urgency detection
-- `heartbeat_app/intelligence/summarizer.py` → digest generation
+- `classifier.py` → urgency detection
+- `summarizer.py` → digest generation
 
 ---
 

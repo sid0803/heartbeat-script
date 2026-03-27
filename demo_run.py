@@ -33,9 +33,9 @@ from heartbeat_app.connectors.gmail_conn import GmailConnector
 from heartbeat_app.connectors.github_conn import GitHubConnector
 from heartbeat_app.connectors.notion_conn import NotionConnector
 from heartbeat_app.core.processor import EventProcessor
-from heartbeat_app.intelligence.classifier import Classifier
-from heartbeat_app.intelligence.signals import Severity
-from heartbeat_app.intelligence.summarizer import Summarizer
+from classifier import Classifier
+from signals import Severity
+from summarizer import Summarizer
 from heartbeat_app.delivery.unified_notifier import UnifiedNotifier
 
 config    = Config()

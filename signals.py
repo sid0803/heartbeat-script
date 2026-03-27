@@ -73,14 +73,21 @@ class BusinessEvent:
             f"{client_tag}{age_tag}: {self.message} → ACTION: {self.action}"
         )
 
+    def get_confidence_label(self) -> str:
+        """Return human-readable confidence level."""
+        if self.confidence >= 0.9:  return "HIGH"
+        if self.confidence >= 0.75: return "MEDIUM"
+        return "LOW"
+
     def to_dict(self) -> dict:
         return {
-            "signal_type": self.signal_type,
-            "severity":    self.severity,
-            "message":     self.message,
-            "action":      self.action,
-            "source":      self.source,
-            "client":      self.client,
-            "age_hours":   self.age_hours,
-            "confidence":  self.confidence,
+            "signal_type":      self.signal_type,
+            "severity":         self.severity,
+            "message":          self.message,
+            "action":           self.action,
+            "source":           self.source,
+            "client":           self.client,
+            "age_hours":        self.age_hours,
+            "confidence":       self.confidence,
+            "confidence_label": self.get_confidence_label(),
         }
