@@ -10,7 +10,6 @@ class DatabaseManager:
             self.db_path = os.path.join(PROJECT_ROOT, "data", "heartbeat.db")
         else:
             self.db_path = db_path
-        self.db_path = db_path
         self._init_db()
 
     def _init_db(self):

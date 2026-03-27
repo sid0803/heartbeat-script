@@ -7,8 +7,8 @@ from heartbeat_app.connectors.gmail_conn import GmailConnector
 from heartbeat_app.connectors.github_conn import GitHubConnector
 from heartbeat_app.connectors.notion_conn import NotionConnector
 from heartbeat_app.core.processor import EventProcessor
-from classifier import Classifier
-from summarizer import Summarizer
+from heartbeat_app.intelligence.classifier import Classifier
+from heartbeat_app.intelligence.summarizer import Summarizer
 from heartbeat_app.delivery.unified_notifier import UnifiedNotifier
 from heartbeat_app.core.scheduler import Scheduler
 from heartbeat_app.db.models import DatabaseManager
@@ -68,8 +68,18 @@ def run_heartbeat():
 
     # 3. Pull raw data
     raw_data = []
+    source_errors = []
     for conn in connectors:
-        raw_data.extend(conn.fetch_data())
+        try:
+            data = conn.fetch_data()
+            raw_data.extend(data)
+            # Collect any internal errors (e.g. from handle_error)
+            if hasattr(conn, "errors"):
+                source_errors.extend(conn.errors)
+        except Exception as e:
+            msg = f"Critical failure in {conn.name}: {e}"
+            print(f"❌ {msg}")
+            source_errors.append(msg)
 
     # 4. Normalise + enrich (Event Processor)
     processor        = EventProcessor()
@@ -81,7 +91,10 @@ def run_heartbeat():
 
     # 6. Summarise with COO prompt (use business events if available, else raw)
     summarizer = _build_summarizer(config)
-    digest     = summarizer.summarize(business_events if business_events else processed_events)
+    digest     = summarizer.summarize(
+        business_events if business_events else processed_events,
+        source_errors = source_errors
+    )
 
     # 7. Persist
     db = DatabaseManager()

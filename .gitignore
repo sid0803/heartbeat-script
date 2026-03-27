@@ -1,7 +1,9 @@
 .env
-heartbeat/db/heartbeat.db
+data/
+.system_generated/
 __pycache__/
 *.pyc
+*.db
 .venv/
 env/
 node_modules/

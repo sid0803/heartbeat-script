@@ -51,23 +51,29 @@ class EventProcessor:
         self._seen_hashes: Set[str] = set()  # For deduplication within a session
 
     def _event_hash(self, source: str, content: str) -> str:
-        return hashlib.md5(f"{source}::{content[:80]}".encode()).hexdigest()
+        # Cross-source deduplication: ignore source and focus on normalized content
+        # Strip common prefixes like "Email from...", "Slack message from..."
+        import re
+        normalized = re.sub(r"^(email from|slack message from|notion task|PR #\d+:|issue #\d+:)\s*", "", content.lower(), flags=re.IGNORECASE)
+        # Use first 100 chars of normalized content for fuzzy-ish match
+        return hashlib.md5(normalized[:100].encode()).hexdigest()
 
     def process(self, raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Normalise, enrich and prioritise raw connector data."""
         processed_events = []
         now = time.time()
+        seen_hashes = set()
 
         for item in raw_data:
             raw_content = item.get("content", "") or f"Status report for {item.get('url','unknown')}"
             source      = item.get("source", "unknown")
             content_lc  = raw_content.lower()
 
-            # ── Deduplication ──────────────────────────────────────────────
+            # ── Advanced Deduplication ─────────────────────────────────────
             h = self._event_hash(source, raw_content)
-            if h in self._seen_hashes:
+            if h in seen_hashes:
                 continue
-            self._seen_hashes.add(h)
+            seen_hashes.add(h)
 
             # ── Severity ───────────────────────────────────────────────────
             severity = "INFO"

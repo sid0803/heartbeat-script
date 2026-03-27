@@ -11,8 +11,8 @@ Ingestion → Classification → Summarization → Delivery
 
 **Components:**
 - `heartbeat.py` → orchestrator
-- `classifier.py` → urgency detection
-- `summarizer.py` → digest generation
+- `heartbeat_app/intelligence/classifier.py` → urgency detection
+- `heartbeat_app/intelligence/summarizer.py` → digest generation
 
 ---
 
@@ -209,6 +209,9 @@ python heartbeat.py
 - [x] Gmail, GitHub, Notion connectors
 - [x] HTML email delivery
 - [x] Semantic event engine (type, age, suggested action)
+- [x] Urgency classification (Rule Engine)
+- [x] Multi-source ingestion (7 connectors)
+- [x] Founder-friendly COO output
 - [ ] Voice command status queries
 - [ ] Weekly "CEO Performance" report
 - [ ] Mobile push notification

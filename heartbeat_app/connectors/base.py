@@ -13,6 +13,11 @@ class BaseConnector(ABC):
         """Fetch raw data from the external source."""
         pass
 
+    def __init__(self):
+        self.errors: List[str] = []
+
     def handle_error(self, error: Exception):
-        """Default error handler."""
-        print(f"Error in {self.name}: {error}")
+        """Default error handler — stores error for reporting."""
+        msg = f"Error in {self.name}: {error}"
+        print(f"⚠️  {msg}")
+        self.errors.append(msg)

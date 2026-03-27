@@ -33,9 +33,9 @@ from heartbeat_app.connectors.gmail_conn import GmailConnector
 from heartbeat_app.connectors.github_conn import GitHubConnector
 from heartbeat_app.connectors.notion_conn import NotionConnector
 from heartbeat_app.core.processor import EventProcessor
-from classifier import Classifier
-from signals import Severity
-from summarizer import Summarizer
+from heartbeat_app.intelligence.classifier import Classifier
+from heartbeat_app.intelligence.signals import Severity
+from heartbeat_app.intelligence.summarizer import Summarizer
 from heartbeat_app.delivery.unified_notifier import UnifiedNotifier
 
 config    = Config()
@@ -77,20 +77,22 @@ classifier      = Classifier()
 business_events = classifier.analyze(events)
 pause(0.4)
 
-# Display business signals by severity
+# Display business signals by severity and confidence
 critical = [e for e in business_events if e.severity == Severity.CRITICAL]
 urgent   = [e for e in business_events if e.severity == Severity.URGENT]
 info     = [e for e in business_events if e.severity == Severity.INFO]
 
 print(f"\n  {red(bold('🔴 CRITICAL SIGNALS'))}: {len(critical)}")
 for e in critical:
-    print(f"    {red('→')} [{e.signal_type.upper().replace('_',' ')}] {e.message}")
+    conf_label = e.get_confidence_label()
+    print(f"    {red('→')} [{e.signal_type.upper().replace('_',' ')}] {e.message} {magenta(f'({conf_label} Confidence)')}")
     print(f"       {dim('ACTION:')} {yellow(e.action)}")
     pause(0.2)
 
 print(f"\n  {yellow(bold('🟡 URGENT SIGNALS'))}: {len(urgent)}")
 for e in urgent:
-    print(f"    {yellow('→')} [{e.signal_type.upper().replace('_',' ')}] {e.message}")
+    conf_label = e.get_confidence_label()
+    print(f"    {yellow('→')} [{e.signal_type.upper().replace('_',' ')}] {e.message} {magenta(f'({conf_label} Confidence)')}")
     print(f"       {dim('ACTION:')} {e.action}")
     pause(0.2)
 
@@ -99,48 +101,46 @@ for e in info:
     print(f"    {green('→')} {e.message}")
     pause(0.1)
 
-print(f"\n  {bold('💡 This layer is your USP')}: raw data → structured business decisions.")
-print(f"  {dim('Each signal answers: WHAT happened · HOW URGENT · WHAT TO DO')}")
+print(f"\n  {bold('💡 Master Layer Update')}: deduplicated across {len(sources)} sources + keyword scoring active.")
 pause(0.6)
 
 # ─── STEP 4 ───────────────────────────────────────────────────────────────────
-step(4, 5, "Generating COO Decision Brief (AI Summarizer)")
-print(dim("  AI acting as your startup COO — not a generic summariser.\n"))
-pause(0.4)
-print(f"  {yellow('○')} No AI key in .env → using MOCK digest (same format as real AI)")
+step(4, 5, "Generating COO Decision Brief (Master Summarizer)")
+print(dim("  AI acting as your startup COO — using robust 🔴/🟡/✅ 3-tier format.\n"))
 pause(0.4)
 summarizer = Summarizer(provider="auto")
-input_events = business_events if business_events else events
-digest = summarizer.summarize(input_events)
+# Simulate a mock source failure for the demo
+mock_errors = ["Critical failure in legacy_crm: Connection timeout"]
+digest = summarizer.summarize(business_events if business_events else events, source_errors=mock_errors)
 
-print(f"\n  {bold('━━━  YOUR 60-SECOND DECISION BRIEF  ━━━')}\n")
+print(f"\n  {bold('━━━  YOUR 60-SECOND MASTER BRIEF  ━━━')}\n")
 for line in digest.split("\n"):
     stripped = line.strip()
-    if stripped.startswith("🚨"):  print(f"  {red(bold(line))}")
-    elif stripped.startswith("👀"): print(f"  {yellow(bold(line))}")
+    if stripped.startswith("🔴"):  print(f"  {red(bold(line))}")
+    elif stripped.startswith("🟡"): print(f"  {yellow(bold(line))}")
     elif stripped.startswith("✅"): print(f"  {green(bold(line))}")
     elif stripped.startswith("📌"): print(f"  {cyan(bold(line))}")
+    elif stripped.startswith("⚠️"): print(f"  {magenta(bold(line))}")
     elif stripped: print(f"  {line}")
 print()
 pause(0.5)
 
 # ─── STEP 5 ───────────────────────────────────────────────────────────────────
-step(5, 5, "Delivering Notification (Delivery Layer)")
+step(5, 5, "Delivering Notification (Multi-channel Delivery)")
 notifier = UnifiedNotifier(preferred="desktop")
 notifier.send(digest)
 pause(0.3)
 
 # ─── Summary ─────────────────────────────────────────────────────────────────
 print("\n" + "═"*65)
-print(bold("  💓  DEMO COMPLETE"))
+print(bold("  💓  MASTER DEMO COMPLETE"))
 print("═"*65)
-print(f"\n  {bold('What just happened:')}")
-print(f"  1. Scanned {len(raw_data)} signals from 7 sources in the background")
-print(f"  2. Normalised → {len(events)} structured events")
-print(f"  3. Founder Brain detected {len(business_events)} business signals")
-print(f"     ({len(critical)} critical, {len(urgent)} urgent, {len(info)} informational)")
-print(f"  4. Generated a COO-style decision brief (not just a summary)")
-print(f"  5. Delivered to your preferred channel")
+print(f"\n  {bold('What just happened (Master Hardening):')}")
+print(f"  1. Multi-source Ingestion with Source Failure tracking")
+print(f"  2. Advanced Deduplication (cross-source consolidation)")
+print(f"  3. Score-based Intelligence with Confidence Labeling")
+print(f"  4. 3-Tier Executive Briefing (🔴/🟡/✅)")
+print(f"  5. Persistence to SQLite and Multi-channel Delivery")
 print(f"\n  {bold('Interview line:')}")
 print(f"  {cyan('\"An event-driven intelligence system that transforms raw operational')}")
 print(f"  {cyan(' signals into prioritized decision recommendations for founders.\"')}")
