@@ -1,37 +1,29 @@
 """
-🎬 USER-COPILOT — Live Demo Script
-===================================
-Shows exactly what a non-technical founder sees every 30 minutes.
+🎬 USER-COPILOT — Live Demo (with Founder Brain Intelligence Layer)
+====================================================================
+Demonstrates all 6 layers including the new Rule Engine.
 No API keys needed — runs on rich realistic mock data.
 """
-import time
-import sys
+import time, sys
 
-# ─── colour helpers (works on Windows / Mac / Linux) ─────────────────────────
-def bold(text): return f"\033[1m{text}\033[0m"
-def green(text): return f"\033[92m{text}\033[0m"
-def red(text):   return f"\033[91m{text}\033[0m"
-def yellow(text):return f"\033[93m{text}\033[0m"
-def cyan(text):  return f"\033[96m{text}\033[0m"
-def dim(text):   return f"\033[2m{text}\033[0m"
+def bold(t): return f"\033[1m{t}\033[0m"
+def green(t): return f"\033[92m{t}\033[0m"
+def red(t):   return f"\033[91m{t}\033[0m"
+def yellow(t):return f"\033[93m{t}\033[0m"
+def cyan(t):  return f"\033[96m{t}\033[0m"
+def magenta(t):return f"\033[95m{t}\033[0m"
+def dim(t):   return f"\033[2m{t}\033[0m"
+def hr(w=65): print(dim("─"*w))
+def step(n, total, label): print(f"\n{cyan(bold(f'  STEP {n}/{total}'))} {bold(label)}"); hr()
+def pause(s=0.35): time.sleep(s)
 
-def hr(char="─", width=65): print(dim(char * width))
-def step(n, total, label):
-    print(f"\n{cyan(bold(f'  STEP {n}/{total}'))} {bold(label)}")
-    hr()
-
-def pause(s=0.4): time.sleep(s)
-
-# ─────────────────────────────────────────────────────────────────────────────
 print("\n" + "═"*65)
 print(bold("  💓  USER-COPILOT  —  Founder Intelligence System"))
-print(bold("  Live Demo Run  |  " + "2026-03-27  22:30 IST"))
+print(bold("  Full Live Demo  |  2026-03-27  22:48 IST"))
 print("═"*65)
-print(dim("  What you're about to see: 30-min digest that runs automatically."))
-print(dim("  All data is realistic mock — identical to live with real keys.\n"))
-pause(0.8)
+print(dim("  Demonstrating all 6 layers including the new Founder Brain.\n"))
+pause(0.6)
 
-# ─── Import system ────────────────────────────────────────────────────────────
 from heartbeat.core.config_manager import Config
 from heartbeat.connectors.slack import SlackConnector
 from heartbeat.connectors.health import HealthCheckConnector
@@ -41,16 +33,16 @@ from heartbeat.connectors.gmail_conn import GmailConnector
 from heartbeat.connectors.github_conn import GitHubConnector
 from heartbeat.connectors.notion_conn import NotionConnector
 from heartbeat.core.processor import EventProcessor
+from heartbeat.intelligence.rule_engine import RuleEngine
+from heartbeat.intelligence.signals import Severity
 from heartbeat.core.summarizer import Summarizer
 from heartbeat.delivery.unified_notifier import UnifiedNotifier
 
-config = Config()
+config    = Config()
 repo_path = config.connectors.get("git", {}).get("repo_path", ".")
 
-# ─── STEP 1: Connectors ───────────────────────────────────────────────────────
-step(1, 4, "Scanning All Data Sources (Layer 2 — Connectors)")
-print(dim("  User-Copilot pulls from every place your business lives:\n"))
-
+# ─── STEP 1 ───────────────────────────────────────────────────────────────────
+step(1, 5, "Scanning All Data Sources (Connectors)")
 sources = [
     ("💬 Slack",          SlackConnector(token="mock_token", channel_ids=["MOCK"])),
     ("📧 Gmail",          GmailConnector()),
@@ -60,102 +52,99 @@ sources = [
     ("📁 Git History",    GitConnector(repo_path=repo_path)),
     ("🗂️  Project Files", FileProjectConnector(project_path=repo_path)),
 ]
-
 raw_data = []
 for label, conn in sources:
     data = conn.fetch_data()
     raw_data.extend(data)
-    status = green("✅") if data else yellow("⚠️ ")
-    print(f"  {status} {label:<22} {dim(str(len(data)) + ' signal(s) received')}")
-    pause(0.3)
-
-print(f"\n  {bold(f'Total raw signals collected: {len(raw_data)}')}")
-pause(0.6)
-
-# ─── STEP 2: Event Engine ─────────────────────────────────────────────────────
-step(2, 4, "Triaging Events (Layer 3 — Event Engine)")
-print(dim("  Deduplicating · scoring urgency · enriching with context:\n"))
-
-processor = EventProcessor()
-events    = processor.process(raw_data)
-
-counts = {"CRITICAL": 0, "URGENT": 0, "INFO": 0}
-for e in events:
-    counts[e["severity"]] = counts.get(e["severity"], 0) + 1
-
-print(f"  {red('🔴 CRITICAL')}  : {counts['CRITICAL']} event(s)")
-print(f"  {yellow('🟡 URGENT')}   : {counts['URGENT']} event(s)")
-print(f"  {green('🟢 INFO')}     : {counts['INFO']} event(s)")
-print(f"\n  {dim('Top issues identified:')}")
-
-for ev in events[:5]:
-    icon   = "🔴" if ev["severity"]=="CRITICAL" else "🟡" if ev["severity"]=="URGENT" else "🟢"
-    source = ev.get("source","").upper()[:12]
-    age    = f"{ev['age_hours']}h ago" if ev.get("age_hours") else ""
-    action = f"  → {dim(ev['suggested_action'])}" if ev.get("suggested_action") else ""
-    print(f"  {icon} [{source:<12}] {ev['content'][:60]}")
-    if age:    print(f"              {dim(age)}")
-    if action: print(f"  {action}")
+    print(f"  {green('✅')} {label:<22} {dim(str(len(data)) + ' signal(s)')}")
     pause(0.25)
-
+print(f"\n  {bold(f'Total raw signals: {len(raw_data)}')}")
 pause(0.5)
 
-# ─── STEP 3: AI Digest ────────────────────────────────────────────────────────
-step(3, 4, "Generating Founder Digest (Layer 4 — AI Summarizer)")
+# ─── STEP 2 ───────────────────────────────────────────────────────────────────
+step(2, 5, "Normalising Events (Event Processor)")
+processor = EventProcessor()
+events    = processor.process(raw_data)
+print(f"  ✅ {len(events)} unique events with enriched schema (severity · type · age_hours)")
+pause(0.5)
 
-print(dim("  Checking available AI providers..."))
+# ─── STEP 3 — THE NEW LAYER ──────────────────────────────────────────────────
+step(3, 5, f"🧠 Founder Brain — Rule Engine")
+print(dim("  Converting raw noise into structured BUSINESS DECISIONS...\n"))
+pause(0.5)
+
+rule_engine     = RuleEngine()
+business_events = rule_engine.analyze(events)
 pause(0.4)
-print(f"  {yellow('○')} Gemini    — no key in .env  (add GEMINI_API_KEY for free AI)")
-print(f"  {yellow('○')} Anthropic — no key in .env  (add ANTHROPIC_API_KEY)")
-print(f"  {yellow('○')} OpenAI    — no key in .env  (add OPENAI_API_KEY)")
-print(f"  {green('✅')} Using MOCK digest  (indistinguishable format; real AI uses same template)")
+
+# Display business signals by severity
+critical = [e for e in business_events if e.severity == Severity.CRITICAL]
+urgent   = [e for e in business_events if e.severity == Severity.URGENT]
+info     = [e for e in business_events if e.severity == Severity.INFO]
+
+print(f"\n  {red(bold('🔴 CRITICAL SIGNALS'))}: {len(critical)}")
+for e in critical:
+    print(f"    {red('→')} [{e.signal_type.upper().replace('_',' ')}] {e.message}")
+    print(f"       {dim('ACTION:')} {yellow(e.action)}")
+    pause(0.2)
+
+print(f"\n  {yellow(bold('🟡 URGENT SIGNALS'))}: {len(urgent)}")
+for e in urgent:
+    print(f"    {yellow('→')} [{e.signal_type.upper().replace('_',' ')}] {e.message}")
+    print(f"       {dim('ACTION:')} {e.action}")
+    pause(0.2)
+
+print(f"\n  {green(bold('🟢 INFO SIGNALS'))}: {len(info)}")
+for e in info:
+    print(f"    {green('→')} {e.message}")
+    pause(0.1)
+
+print(f"\n  {bold('💡 This layer is your USP')}: raw data → structured business decisions.")
+print(f"  {dim('Each signal answers: WHAT happened · HOW URGENT · WHAT TO DO')}")
 pause(0.6)
 
+# ─── STEP 4 ───────────────────────────────────────────────────────────────────
+step(4, 5, "Generating COO Decision Brief (AI Summarizer)")
+print(dim("  AI acting as your startup COO — not a generic summariser.\n"))
+pause(0.4)
+print(f"  {yellow('○')} No AI key in .env → using MOCK digest (same format as real AI)")
+pause(0.4)
 summarizer = Summarizer(provider="auto")
-digest     = summarizer.summarize(events)
+input_events = business_events if business_events else events
+digest = summarizer.summarize(input_events)
 
-print(f"\n  {bold('━━━  YOUR 30-MINUTE DIGEST  ━━━')}")
-print()
+print(f"\n  {bold('━━━  YOUR 60-SECOND DECISION BRIEF  ━━━')}\n")
 for line in digest.split("\n"):
-    if line.startswith("🟢"):
-        print(f"  {green(line)}")
-    elif line.startswith("🔴"):
-        print(f"  {red(line)}")
-    elif line.startswith("📌"):
-        print(f"  {cyan(line)}")
-    elif line.startswith("⏱️"):
-        print(f"  {dim(line)}")
-    elif line.strip():
-        print(f"  {line}")
+    stripped = line.strip()
+    if stripped.startswith("🚨"):  print(f"  {red(bold(line))}")
+    elif stripped.startswith("👀"): print(f"  {yellow(bold(line))}")
+    elif stripped.startswith("✅"): print(f"  {green(bold(line))}")
+    elif stripped.startswith("📌"): print(f"  {cyan(bold(line))}")
+    elif stripped: print(f"  {line}")
 print()
-pause(0.6)
+pause(0.5)
 
-# ─── STEP 4: Delivery ─────────────────────────────────────────────────────────
-step(4, 4, "Delivering Digest (Layer 5 — Delivery)")
-print(dim("  Sending via configured channel...\n"))
-
-print(f"  {dim('delivery.preferred = desktop  (set email/slack/all in settings.yaml)')}")
-pause(0.4)
+# ─── STEP 5 ───────────────────────────────────────────────────────────────────
+step(5, 5, "Delivering Notification (Delivery Layer)")
 notifier = UnifiedNotifier(preferred="desktop")
 notifier.send(digest)
 pause(0.3)
 
-# ─── STEP 5: Save to DB ───────────────────────────────────────────────────────
-print(f"\n  {green('✅')} Digest saved to SQLite  ({dim('heartbeat/db/heartbeat.db')})")
-print(f"  {green('✅')} 8:00 AM daily summary will read from this store")
-
-# ─── Summary ──────────────────────────────────────────────────────────────────
+# ─── Summary ─────────────────────────────────────────────────────────────────
 print("\n" + "═"*65)
-print(bold("  💓  DEMO COMPLETE  —  This runs every 30 minutes automatically"))
+print(bold("  💓  DEMO COMPLETE"))
 print("═"*65)
-print(f"\n  {bold('What just happened (as a founder would read it):')}")
-print(f"  1. System silently checked 7 sources in the background")
-print(f"  2. Found {len(events)} signals, ranked by urgency")
-print(f"  3. Converted raw noise → 5 plain-English action items")
-print(f"  4. Delivered to your desktop / Slack / email")
-print(f"\n  {bold('To activate real AI (5 min setup):')}")
-print(f"  • Get free Gemini key ─→  {cyan('https://aistudio.google.com/')}")
-print(f"  • Add to .env: GEMINI_API_KEY=your-key")
-print(f"\n  {bold('To start the live scheduler:')}")
-print(f"  • Run: {cyan('python main.py')}")
-print(f"\n{dim('  user-copilot · github.com/sid0803/user-copilot')}\n")
+print(f"\n  {bold('What just happened:')}")
+print(f"  1. Scanned {len(raw_data)} signals from 7 sources in the background")
+print(f"  2. Normalised → {len(events)} structured events")
+print(f"  3. Founder Brain detected {len(business_events)} business signals")
+print(f"     ({len(critical)} critical, {len(urgent)} urgent, {len(info)} informational)")
+print(f"  4. Generated a COO-style decision brief (not just a summary)")
+print(f"  5. Delivered to your preferred channel")
+print(f"\n  {bold('Interview line:')}")
+print(f"  {cyan('\"An event-driven intelligence system that transforms raw operational')}")
+print(f"  {cyan(' signals into prioritized decision recommendations for founders.\"')}")
+print(f"\n  {bold('Next:')}")
+print(f"  • Add GEMINI_API_KEY to .env for real AI  →  {cyan('https://aistudio.google.com/')}")
+print(f"  • Start the loop: {cyan('python main.py')}")
+print(f"\n{dim('  github.com/sid0803/user-copilot')}\n")

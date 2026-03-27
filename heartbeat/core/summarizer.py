@@ -1,38 +1,63 @@
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 
 
-# ─────────────────────────────────────────────
-#  Prompt builder (shared across all providers)
-# ─────────────────────────────────────────────
-def _build_prompt(events: List[Dict[str, Any]], is_daily: bool, preferences: str) -> str:
+# ─────────────────────────────────────────────────────────────────────────────
+#  COO Prompt Builder
+#  Accepts either raw processor events (dicts) or BusinessEvent objects.
+#  The output asks the LLM to act as a startup COO — not a summariser.
+# ─────────────────────────────────────────────────────────────────────────────
+def _build_prompt(events: List[Any], is_daily: bool, preferences: str) -> str:
     if is_daily:
-        prompt = (
-            "You are a Chief of Staff. Generate a 'BIG PICTURE' Daily Executive Summary for the Founder.\n"
-            f"User Preferences: {preferences}\n"
-            "Summarise the following digests from the last 24 hours into a cohesive story of progress and alerts.\n\n"
+        intro = (
+            "You are the Founder's Chief of Staff.\n"
+            "Generate a 'BIG PICTURE' Daily Executive Brief for today.\n"
+            f"Founder preferences: {preferences}\n\n"
+            "Structure your response exactly like this:\n"
+            "📅 YESTERDAY IN ONE LINE: <single sentence summary>\n\n"
+            "🏆 TOP WIN: <best thing that happened>\n\n"
+            "🔴 UNRESOLVED RISKS: <bullet list — anything still open>\n\n"
+            "🎯 TODAY'S PRIORITY: <the ONE most important thing for the founder>\n\n"
+            "Digest history from past 24 hours:\n\n"
         )
     else:
-        prompt = (
-            "You are a professional assistant for a non-technical founder.\n"
-            f"User Preferences: {preferences}\n"
-            "Summarise the following events into a clear, calm, and decision-oriented digest.\n"
-            "Use max 5-7 bullet points. No technical jargon.\n\n"
-            "Format exactly like this:\n"
-            "🟢 System Status: <one-line overall health>\n"
-            "🔴 Critical Items: <bullet list of issues>\n"
-            "📌 Recommended Actions: <numbered action list>\n"
-            "⏱️ Next Check-in: <when the founder should look again>\n\n"
-            "Events:\n"
+        intro = (
+            "You are a startup COO acting as the founder's AI decision assistant.\n"
+            f"Founder preferences: {preferences}\n\n"
+            "Your ONLY job is to convert operational signals into a clear decision brief.\n"
+            "Be direct, human, and specific. No jargon. No fluff.\n"
+            "Imagine you are briefing the founder in a 60-second standup.\n\n"
+            "Format your response EXACTLY like this (use the emojis):\n\n"
+            "🚨 URGENT — DO THESE NOW:\n"
+            "  1. [specific action with client/task name]\n"
+            "  (list only actions that need attention in the next 2 hours)\n\n"
+            "👀 WATCH CLOSELY:\n"
+            "  • [things that need attention today but not immediately]\n\n"
+            "✅ RUNNING SMOOTH:\n"
+            "  • [what is working fine — keep it brief]\n\n"
+            "📌 BOTTOM LINE: [ONE sentence — what the founder should focus on right now]\n\n"
+            "Operational signals:\n\n"
         )
+
+    # Render events — support both BusinessEvent objects and plain dicts
     for event in events:
-        if isinstance(event, dict):
-            age = f" | {event['age_hours']}h old" if event.get("age_hours") else ""
-            action = f" → {event['suggested_action']}" if event.get("suggested_action") else ""
-            prompt += f"- [{event.get('severity','INFO')}] {event.get('source')}: {event.get('content')}{age}{action}\n"
+        if hasattr(event, "to_prompt_line"):
+            # BusinessEvent from intelligence layer
+            prompt_line = event.to_prompt_line()
+        elif isinstance(event, dict):
+            age    = f" [{event.get('age_hours', 0):.1f}h old]" if event.get("age_hours") else ""
+            action = f" → {event.get('suggested_action', '')}" if event.get("suggested_action") else ""
+            sev    = event.get("severity", "INFO")
+            src    = event.get("source", "unknown")
+            con    = event.get("content", "")
+            prompt_line = f"[{sev}] {src}{age}: {con}{action}"
         else:
-            prompt += f"- {event}\n"
-    return prompt
+            prompt_line = str(event)
+        intro += f"• {prompt_line}\n"
+
+    return intro
+
+
 
 
 class Summarizer:

@@ -28,7 +28,7 @@ Founders often feel "blind" to their project's technical progress. They either s
 
 ## 🏗️ System Architecture
 
-User Copilot follows a **5-layer architecture** where each layer converts raw signals into cleaner, more actionable output.
+User Copilot follows a **6-layer architecture** where each layer converts raw signals into cleaner, more actionable output.
 
 ```mermaid
 graph TD
@@ -43,20 +43,28 @@ graph TD
     end
 
     subgraph Layer2 [Layer 2 — Event Engine]
-        P1[EventProcessor]
-        P1 -->|Enrich| P2[type · severity · age_hours]
-        P2 -->|Urgency Decay| P3[Deduplication]
+        P1[EventProcessor — normalise + enrich]
     end
 
-    subgraph Layer3 [Layer 3 — AI Summarizer]
+    subgraph Layer25 [Layer 3 — 🧠 Founder Brain - Rule Engine]
+        R1[rule: client_risk]
+        R2[rule: deadline_risk]
+        R3[rule: system_failure]
+        R4[rule: team_blocker]
+        R5[rule: revenue_risk]
+        R6[rule: opportunity_signal]
+        R1 & R2 & R3 & R4 & R5 & R6 --> BE[BusinessEvent: message + action + severity]
+    end
+
+    subgraph Layer3 [Layer 4 — AI Summarizer - COO Brief]
         AI1[🔵 Gemini - free]
         AI2[🟣 Anthropic Claude]
         AI3[🟢 OpenAI GPT-4o]
         AI1 -->|fallback| AI2 -->|fallback| AI3
     end
 
-    subgraph Layer4 [Layer 4 — Delivery]
-        D1[🖥️ Desktop Notification]
+    subgraph Layer4 [Layer 5 — Delivery]
+        D1[🖥️ Desktop]
         D2[💬 Slack Webhook]
         D3[📬 HTML Email]
     end
@@ -67,8 +75,9 @@ graph TD
     end
 
     Layer1 -->|Raw signals| P1
-    P3 -->|Structured events| Layer3
-    Layer3 -->|Digest| Layer4
+    P1 -->|Structured events| Layer25
+    BE -->|Business signals| Layer3
+    Layer3 -->|COO decision brief| Layer4
     Layer3 -->|Save| DB
     SC -->|Triggers| Layer1
 ```
@@ -80,8 +89,9 @@ graph TD
 1. **Layer 0 — Scheduler**: Activity-aware loop (skips cycles when you're away). Triggers the 8AM daily summary automatically.
 2. **Layer 1 — Connectors**: 7 pluggable data sources. Each degrades gracefully to rich mock data when API keys are absent.
 3. **Layer 2 — Event Engine**: Normalises raw signals into a structured schema (`type`, `severity`, `client`, `age_hours`, `suggested_action`). Stale items escalate automatically.
-4. **Layer 3 — AI Summarizer**: Sends enriched events to your chosen LLM and returns a 5-point founder digest. Auto-selects the best available key.
-5. **Layer 4 — Delivery Engine**: Routes the digest to desktop, Slack, email, or all three simultaneously.
+4. **Layer 3 — 🧠 Founder Brain (Rule Engine)**: The core USP. 6 independent business rules convert enriched events into `BusinessEvent` objects that each answer: **WHAT happened · HOW URGENT · WHAT TO DO**. Rules: `client_risk`, `deadline_risk`, `system_failure`, `team_blocker`, `revenue_risk`, `opportunity_signal`.
+5. **Layer 4 — AI Summarizer (COO Brief)**: Sends `BusinessEvent` objects to the LLM with a **startup COO prompt** — not a generic "summarise this" prompt. Output format: 🚨 Urgent Actions / 👀 Watch Closely / ✅ Running Smooth / 📌 Bottom Line.
+6. **Layer 5 — Delivery Engine**: Routes the digest to desktop, Slack, email, or all three simultaneously.
 
 ---
 
