@@ -1,189 +1,333 @@
-# 💓 Heartbeat: Your Universal Personal Intelligence System
 
-![Hero Header](assets/dashboard.png)
+# 💓 Heartbeat
 
-> **"Turn the Digital Noise of Every User into Human Clarity."**
-> 
-> Heartbeat is a modular, AI-driven decision engine designed to act as your **Personal Chief of Staff**. It scans your emails, messages, tasks, and system logs to deliver a clear, actionable executive brief every 30 minutes.
+### **From 100 Notifications → 1 Clear Decision**
 
----
-
-## 🌟 The Vision: Intelligence for Everyone
-
-In a world where we are overwhelmed by notifications from Slack, Gmail, Notion, and GitHub, **Heartbeat** is the filter. Whether you are a **Founder**, a **Remote Engineer**, a **Freelance Designer**, or a **Busy Student**, Heartbeat connects the dots across your digital life so you can focus on what actually matters.
-
-### 🎯 Core Philosophy
-- **Noise Reduction:** If it's not urgent, it doesn't interrupt you.
-- **Deep Context:** Cross-referencing signals (e.g., a GitHub bug + a Gmail complaint).
-- **Local First:** Your data belongs to you. Processing happens on your machine.
+> Your **Personal AI Chief of Staff** that turns scattered signals (Slack, Gmail, GitHub, Notion) into a single, actionable executive brief.
 
 ---
 
-## 🏗️ 6-Layer Intelligence Architecture
+## 🧠 What is Heartbeat?
 
-Heartbeat follows a strict "Pipeline" approach to data. Each layer refines the information until it becomes a simple human decision.
+**Heartbeat** is a **privacy-first, local intelligence system** that continuously scans your digital ecosystem and delivers:
 
-![Architecture Diagram](assets/architecture.png)
+* 🔴 Critical issues (revenue risk, system failure)
+* 🟡 Important follow-ups (delays, blockers)
+* ✅ Informational updates (low-priority changes)
 
-### 1. 🔍 Layer 1: Scanners (Connectors)
-Pluggable tools that "watch" your accounts.
-- **💬 Slack:** Monitors DMs and specific channels for urgent mentions.
-- **📧 Gmail:** Scans for keywords related to client risks, invoices, or deadlines.
-- **🐙 GitHub:** Watches for PR stale-ness, critical issues, and commit activity.
-- **📝 Notion:** Tracks overdue tasks and project roadmap changes.
-- **🏥 Logs/Health:** Pings endpoints to ensure your infrastructure is 100% UP.
-
-### 2. 🧹 Layer 2: Event Engine (Normalization)
-Converts raw data from 7+ sources into a standard "Event" format. It deduplicates alerts—so if an error shows up in your logs and on Slack, you only see it once.
-
-### 3. 🧠 Layer 3: The Brain (Classifier)
-Uses business-level rules to calculate a **Priority Score (0-10)**.
-- **Rule Engine:** Detects revenue risks, client follow-ups, and blockers.
-- **Multi-Source Thinking:** If the same topic appears across Slack AND Email, the system escalates the priority to `CRITICAL`.
-
-### 4. 📝 Layer 4: AI Summarizer (The COO)
-Leverages high-performance LLMs (Gemini 1.5 Flash, Claude 3, or GPT-4o) to write a human-readable 60-second brief. It converts technical signals into business decisions.
-
-### 5. 📂 Layer 5: Persistence (Vault)
-Stores every signal and digest in a local SQLite database. This allows for **Daily Executive Summaries** that recap your last 24 hours of activity.
-
-### 6. 🔔 Layer 6: Delivery (Routing)
-Routes the final brief to your preferred endpoint:
-- **Chrome Extension (Popup)**
-- **Web Dashboard**
-- **Desktop Notifications**
-- **Slack Webhooks / HTML Email**
+👉 Every **30 minutes → 1 clear decision**
 
 ---
 
-## 🧩 Matrix of Supported Connectors
+## ⚡ How It Works (10 Sec Overview)
 
-| Connector | Type | Primary Benefit |
-| :--- | :--- | :--- |
-| **Slack** | Communication | Detects "at risk" client conversations or team blockers. |
-| **Gmail** | Communication | Surfaces urgent follow-ups and revenue-related threads. |
-| **GitHub** | Development | Flags stale PRs, critical issues, and infra failures. |
-| **Notion** | Operations | Reminds you of overdue tasks and changing priorities. |
-| **Health Check** | Monitoring | Instant alerts if your website or API goes DOWN. |
-| **Git/File** | Local | Tracks activity in your local codebase or project folders. |
+```mermaid
+flowchart LR
+    A[Scanners] --> B[Event Engine]
+    B --> C[Classifier]
+    C --> D[AI Summarizer]
+    D --> E[Storage]
+    E --> F[Delivery]
+
+    style C fill:#ff4d4d,color:#fff
+```
+
+👉 **Signals → Context → Priority → Decision → Delivery**
 
 ---
 
-## 🛠️ Developer Technical Manual
+## 🤯 Before vs After
 
-### 🗄️ Database Schema (SQLite)
-Heartbeat uses a multi-tenant SQLite database to maintain privacy and performance.
+| Without Heartbeat ❌ | With Heartbeat ✅ |
+| ------------------- | ---------------- |
+| 50+ notifications   | 1 clear brief    |
+| Context switching   | Deep focus       |
+| Missed priorities   | Ranked actions   |
+| Stress              | Control          |
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+graph TD
+    subgraph Input Layer
+        A1[Slack]
+        A2[Gmail]
+        A3[GitHub]
+        A4[Notion]
+        A5[System Logs]
+    end
+
+    subgraph Processing Layer
+        B1[Event Engine]
+        B2[Normalization]
+        B3[Deduplication]
+    end
+
+    subgraph Intelligence Layer
+        C1[Classifier]
+        C2[Priority Scoring]
+        C3[LLM Summarizer]
+    end
+
+    subgraph Storage
+        D1[SQLite Vault]
+    end
+
+    subgraph Delivery
+        E1[Dashboard]
+        E2[Chrome Extension]
+        E3[Notifications]
+        E4[Slack / Email]
+    end
+
+    A1 --> B1
+    A2 --> B1
+    A3 --> B1
+    A4 --> B1
+    A5 --> B1
+
+    B1 --> B2 --> B3 --> C1 --> C2 --> C3 --> D1
+    C3 --> E1
+    C3 --> E2
+    C3 --> E3
+    C3 --> E4
+```
+
+---
+
+## 🧠 Core Intelligence Layers
+
+### 1. 🔍 Scanners (Input Layer)
+
+* Slack → Urgent messages
+* Gmail → Revenue-risk emails
+* GitHub → PRs, issues
+* Notion → Tasks & roadmap
+* Logs → System health
+
+---
+
+### 2. 🧹 Event Engine
+
+* Normalizes data into unified format
+* Removes duplicates across sources
+
+---
+
+### 3. 🧠 Classifier (The Brain)
+
+* Assigns **Priority Score (0–10)**
+* Detects:
+
+  * 🚨 Failures
+  * 💰 Revenue risks
+  * ⏳ Delays
+  * 🔗 Cross-source signals
+
+---
+
+### 4. 📝 AI Summarizer
+
+* Converts raw signals → **human decisions**
+* Powered by:
+
+  * Gemini / Claude / GPT / Local LLM
+
+---
+
+### 5. 📂 Persistence Layer
+
+* Local SQLite storage
+* Enables:
+
+  * Daily summaries
+  * Historical insights
+
+---
+
+### 6. 🔔 Delivery Layer
+
+* Chrome Extension
+* Dashboard
+* Notifications
+* Slack / Email
+
+---
+
+## 🎯 Priority Scoring Logic
+
+```mermaid
+graph LR
+    A[Crash / Failure] --> +3
+    B[Delay / Overdue] --> +2
+    C[Multi-source signal] --> CRITICAL
+    D[Older than 24h] --> +1
+```
+
+### Final Output:
+
+* 🔴 Critical (Act Now)
+* 🟡 Warning (Needs Attention)
+* ✅ Normal (Informational)
+
+---
+
+## 📝 Example Output (What Users Actually Get)
+
+```txt
+🔴 CRITICAL:
+- Payment system failure detected (Slack + Gmail)
+- Impact: Revenue loss risk
+
+🟡 WARNING:
+- GitHub PR #342 inactive for 48 hours
+
+✅ INFO:
+- Notion roadmap updated
+
+👉 Recommended Action:
+Fix payment system immediately. Follow up with backend team.
+```
+
+---
+
+## 💻 Developer View (Pipeline)
+
+```python
+def heartbeat_pipeline():
+    events = scan_sources()
+    normalized = normalize(events)
+    scored = classify(normalized)
+    summary = generate_summary(scored)
+    store(summary)
+    deliver(summary)
+```
+
+---
+
+## 🗄️ Database Schema (SQLite)
 
 ```sql
--- Core User Table
 CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE,
-    password_hash TEXT,
-    preferences TEXT
+    id INTEGER PRIMARY KEY,
+    email TEXT,
+    password_hash TEXT
 );
 
--- Connector Configurations (Encrypted JSON)
 CREATE TABLE connector_configs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     user_id INTEGER,
-    connector_type TEXT, -- 'slack', 'gmail', etc.
-    config_json TEXT,    -- API keys/tokens
-    is_active INTEGER,
-    FOREIGN KEY(user_id) REFERENCES users(id)
+    connector_type TEXT,
+    config_json TEXT
 );
 
--- Executive Digests
 CREATE TABLE digests (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     user_id INTEGER,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    content TEXT,        -- The 🔴/🟡/✅ summary
-    source_type TEXT,
-    FOREIGN KEY(user_id) REFERENCES users(id)
+    content TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
-### 🛣️ API Reference (FastAPI)
-The backend exposes a clean REST API for extensions and dashboards.
-
-- `POST /register`: Create a new local user and seed mock data.
-- `POST /token`: Authenticate and receive a Bearer token.
-- `GET /digests`: Fetch the latest 50 intelligence briefs.
-- `POST /heartbeat/trigger`: Manually trigger a 6-layer scan.
-
-### 🧠 Classifier Logic (Scoring)
-The "Brain" (`classifier.py`) calculates severity based on these tunable weights:
-- **Keywords (Crash/Failure/Down):** +3.0 Score
-- **Keywords (Delay/Overdue):** +2.0 Score
-- **Multi-Source Intensity:** Escalates to `CRITICAL` instantly.
-- **Age (>24h):** +1.0 Score
-
 ---
 
-## 🚀 Installation & Setup
+## 🚀 Quick Start
 
-### 1. Prerequisites
-- Python 3.9+
-- Node.js 18+ (for Dashboard/Extension)
-- API Keys (Gemini, Slack, GitHub, etc. — configurable in `.env`)
+### 1. Clone Repo
 
-### 2. Backend Setup
 ```bash
-# Clone the repo
 git clone https://github.com/sid0803/heartbeat-system
 cd heartbeat-system
+```
 
-# Install dependencies
+### 2. Backend Setup
+
+```bash
 pip install -r requirements.txt
-
-# Run the server
 python server/main.py
 ```
 
-### 3. Dashboard & Extension Setup
+### 3. Frontend Setup
+
 ```bash
 cd dashboard
 npm install
 npm run build
 ```
 
-### 4. Loading the Chrome Extension
-1. Open Chrome and navigate to `chrome://extensions`.
-2. Toggle **Developer mode** (top right).
-3. Click **Load unpacked** and select the `heartbeat-system/dashboard/dist` folder.
-4. Pin the **Heartbeat** icon to your toolbar.
+### 4. Load Extension
+
+* Go to `chrome://extensions`
+* Enable Developer Mode
+* Load `/dashboard/dist`
 
 ---
 
-## 🔒 Privacy & Security
+## 🔒 Privacy-First Architecture
 
-**Your Data, Your Machine.** 
-- **Local First:** The SQLite database and all API scanning logic run locally.
-- **AI Choice:** You can configure the system to use Gemini (Free Tier), Claude, or OpenAI.
-- **Credential Storage:** API tokens are stored in your local `.env` and SQLite database, never uploaded to a third-party server.
+* ✅ 100% Local Processing
+* ✅ SQLite (no external DB)
+* ✅ No raw data leaves device
+* ✅ Optional LLM usage
 
----
-
-## 🗺️ Shared Roadmap
-- [ ] **Discord Connector:** Monitor community sentiment.
-- [ ] **Telegram Integration:** Delivery layer for mobile notifications.
-- [ ] **Jira/Linear Support:** Deeper project management intelligence.
-- [ ] **Voice Briefing:** Audio summary of your day via ElevenLabs.
+👉 **Your data never becomes someone else's model**
 
 ---
 
-## ❓ FAQ & Troubleshooting
+## 🧠 Why Heartbeat Wins
 
-**Q: Why is my dashboard empty?**
-A: You need to trigger the first scan! Either run `python heartbeat.py` or click the "Trigger Loop" button in the extension/dashboard.
-
-**Q: Does this cost anything?**
-A: Heartbeat is open-source. Using the Gemini Free Tier or local models (Ollama) makes the intelligence engine completely free.
-
-**Q: Can I add my own connector?**
-A: Yes! Simply subclass `BaseConnector` in `heartbeat_app/connectors/base.py` and implement the `fetch_data` method.
+| Feature                | Traditional Tools | Heartbeat |
+| ---------------------- | ----------------- | --------- |
+| Multi-source reasoning | ❌                 | ✅         |
+| Local-first AI         | ❌                 | ✅         |
+| Executive summaries    | ❌                 | ✅         |
+| Noise filtering        | ⚠️                | ✅         |
+| Decision engine        | ❌                 | ✅         |
 
 ---
 
-🔗 [github.com/sid0803/heartbeat-system](https://github.com/sid0803/heartbeat-system) · **Intelligence for Everyone. Built by AI.**
+## 🧩 Supported Connectors
+
+| Tool   | Purpose                  |
+| ------ | ------------------------ |
+| Slack  | Team communication       |
+| Gmail  | Client & revenue signals |
+| GitHub | Dev workflow             |
+| Notion | Task tracking            |
+| Logs   | System monitoring        |
+
+---
+
+## 🗺️ Roadmap
+
+* [ ] Discord Integration
+* [ ] Telegram Alerts
+* [ ] Jira / Linear Support
+* [ ] Voice Briefing (AI audio)
+* [ ] Mobile App
+
+---
+
+## ❓ FAQ
+
+**Q: Why is nothing showing?**
+→ Trigger the first scan manually.
+
+**Q: Is it free?**
+→ Yes (use Gemini free tier or local LLM).
+
+**Q: Can I build my own connector?**
+→ Yes, extend `BaseConnector`.
+
+---
+
+## ⭐ Final Thought
+
+> Most tools give you **more data**
+> Heartbeat gives you **clear decisions**
+
+---
+
+
