@@ -5,6 +5,7 @@ from .base import BaseConnector
 
 class GitConnector(BaseConnector):
     def __init__(self, repo_path: str, max_commits: int = 5):
+        super().__init__()
         self.repo_path = repo_path
         self.max_commits = max_commits
 

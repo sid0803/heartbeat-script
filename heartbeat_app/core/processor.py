@@ -3,23 +3,27 @@ import hashlib
 from typing import List, Dict, Any, Set
 
 # ── Keyword maps ────────────────────────────────────────────────────────────
-CRITICAL_KEYWORDS = {"broken", "critical", "down", "outage", "emergency", "failed", "crash"}
-URGENT_KEYWORDS   = {"urgent", "error", "deadline", "money", "immediate", "overdue", "waiting", "blocker"}
+CRITICAL_KEYWORDS = {"critical", "emergency", "missed", "blocked", "stalled", "lost"}
+URGENT_KEYWORDS   = {"urgent", "deadline", "money", "immediate", "overdue", "waiting", "blocker", "renewal", "proposal"}
 CLIENT_SIGNALS    = {"client", "customer", "partner", "investor", "stakeholder"}
 
 # ── Event-type inference ─────────────────────────────────────────────────────
 def _infer_type(source: str, content: str) -> str:
     c = content.lower()
-    if source == "health_check":
-        return "service_outage" if "down" in c else "service_health"
     if source == "slack":
         return "client_message" if any(s in c for s in CLIENT_SIGNALS) else "team_update"
     if source == "gmail":
         return "client_email"
     if source == "github":
-        return "pr_stale" if "pr" in c or "pull" in c else "issue_open"
+        return "pr_stale" if "delivery item" in c or "pull" in c else "issue_open"
     if source == "notion":
         return "task_overdue"
+    if source == "calendar":
+        if "cancelled" in content.lower() or "canceled" in content.lower():
+            return "meeting_cancelled"
+        if "conflict" in content.lower() or "double-book" in content.lower():
+            return "meeting_conflict"
+        return "meeting_soon"
     if source in ("git_project", "full_project_analysis"):
         return "code_activity"
     return "general"
@@ -35,13 +39,14 @@ def _extract_client(content: str) -> str:
 _ACTION_MAP = {
     "client_message": "Reply to client message within 2 hours",
     "client_email":   "Review and respond to client email",
-    "service_outage": "Alert engineering team immediately",
-    "pr_stale":       "Review and merge or close the PR",
+    "pr_stale":       "Confirm whether this blocks a customer promise",
     "task_overdue":   "Assign or reschedule the overdue task",
-    "issue_open":     "Triage and assign the open issue",
+    "issue_open":     "Assign an owner if this affects a customer commitment",
     "code_activity":  "Review recent commits for quality",
     "team_update":    "Acknowledge team update",
-    "service_health": None,
+    "meeting_soon":   "Prepare for the meeting and confirm agenda, attendees, and follow-up",
+    "meeting_conflict": "Resolve the schedule conflict before the meeting start",
+    "meeting_cancelled": "Confirm the meeting cancellation or reschedule with stakeholders",
     "general":        None,
 }
 
@@ -54,7 +59,7 @@ class EventProcessor:
         # Cross-source deduplication: ignore source and focus on normalized content
         # Strip common prefixes like "Email from...", "Slack message from..."
         import re
-        normalized = re.sub(r"^(email from|slack message from|notion task|PR #\d+:|issue #\d+:)\s*", "", content.lower(), flags=re.IGNORECASE)
+        normalized = re.sub(r"^(email from|slack message from|notion task|delivery item|delivery issue|issue #\d+:)\s*", "", content.lower(), flags=re.IGNORECASE)
         # Use first 100 chars of normalized content for fuzzy-ish match
         return hashlib.md5(normalized[:100].encode()).hexdigest()
 
@@ -91,7 +96,7 @@ class EventProcessor:
                 severity = "URGENT"  # Stale items deserve attention
 
             # ── Semantic enrichment ────────────────────────────────────────
-            event_type       = _infer_type(source, raw_content)
+            event_type       = item.get("type") or _infer_type(source, raw_content)
             client           = item.get("client") or _extract_client(raw_content)
             suggested_action = _ACTION_MAP.get(event_type)
 
@@ -104,10 +109,15 @@ class EventProcessor:
                 "age_hours":        age_hours,
                 "suggested_action": suggested_action,
                 "timestamp":        ts,
+                "event_time":       item.get("event_time", ""),
+                "attendees":        item.get("attendees", []),
+                "location":         item.get("location", ""),
+                "status":           item.get("status", ""),
+                "reason":           item.get("reason", ""),
+                "summary":          item.get("summary", ""),
             })
 
         # Sort: CRITICAL → URGENT → INFO
         _order = {"CRITICAL": 0, "URGENT": 1, "INFO": 2}
         processed_events.sort(key=lambda x: _order.get(x["severity"], 3))
         return processed_events
-

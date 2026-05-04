@@ -19,5 +19,5 @@ class BaseConnector(ABC):
     def handle_error(self, error: Exception):
         """Default error handler — stores error for reporting."""
         msg = f"Error in {self.name}: {error}"
-        print(f"⚠️  {msg}")
+        print(f"[!]  {msg}")
         self.errors.append(msg)

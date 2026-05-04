@@ -3,15 +3,15 @@ import os
 import json
 from heartbeat_app.db.models import DatabaseManager
 from heartbeat_app.connectors.slack import SlackConnector
-from heartbeat_app.connectors.health import HealthCheckConnector
 from heartbeat_app.connectors.git_conn import GitConnector
 from heartbeat_app.connectors.file_project import FileProjectConnector
 from heartbeat_app.connectors.gmail_conn import GmailConnector
 from heartbeat_app.connectors.github_conn import GitHubConnector
 from heartbeat_app.connectors.notion_conn import NotionConnector
+from heartbeat_app.connectors.calendar_conn import CalendarConnector
 from heartbeat_app.core.processor import EventProcessor
-from classifier import Classifier
-from summarizer import Summarizer
+from heartbeat_app.intelligence.classifier import Classifier
+from heartbeat_app.intelligence.summarizer import Summarizer
 from heartbeat_app.delivery.unified_notifier import UnifiedNotifier
 
 def run_heartbeat_for_user(user_id: int, config) -> str:
@@ -24,9 +24,6 @@ def run_heartbeat_for_user(user_id: int, config) -> str:
         SlackConnector(
             token       = config.get_env("SLACK_TOKEN"),
             channel_ids = config.connectors.get("slack", {}).get("channel_ids", []),
-        ),
-        HealthCheckConnector(
-            endpoints = config.connectors.get("health", {}).get("endpoints", []),
         ),
         # Note: Local file/git connectors might not work in a hosted SaaS,
         # but for this MVP on user's device, we keep them.
@@ -41,6 +38,12 @@ def run_heartbeat_for_user(user_id: int, config) -> str:
             token       = config.get_env("NOTION_TOKEN"),
             database_id = config.connectors.get("notion", {}).get("database_id", ""),
         ),
+        CalendarConnector(
+            provider         = config.connectors.get("calendar", {}).get("provider", "google"),
+            credentials_path = config.connectors.get("calendar", {}).get("credentials_path"),
+            calendar_id      = config.connectors.get("calendar", {}).get("calendar_id", "primary"),
+            lookahead_hours  = config.connectors.get("calendar", {}).get("lookahead_hours", 48),
+        ),
     ]
 
     # 3. Pull raw data
@@ -49,7 +52,7 @@ def run_heartbeat_for_user(user_id: int, config) -> str:
     for conn in connectors:
         try:
             # Check if connector is configured
-            if hasattr(conn, "is_configured") and not conn.is_configured(): continue
+            if hasattr(conn, "is_configured") and not conn.is_configured: continue
             # Basic sanity check (if token is missing, skip)
             if hasattr(conn, "token") and not conn.token: continue
             
@@ -57,7 +60,7 @@ def run_heartbeat_for_user(user_id: int, config) -> str:
             raw_data.extend(data)
             if hasattr(conn, "errors"): source_errors.extend(conn.errors)
         except Exception as e:
-            source_errors.append(f"Failure in {conn.name}: {e}")
+            source_errors.append(f"{conn.name} data unavailable: {e}")
 
     # 4. Process + Brain
     processor        = EventProcessor()

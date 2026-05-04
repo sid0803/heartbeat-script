@@ -1,5 +1,5 @@
 """
-Founder Brain — Rule Engine for Heartbeat System.
+Founder Brain -- Rule Engine for Heartbeat System.
 
 This is the MOST IMPORTANT module in the system.
 
@@ -12,7 +12,7 @@ Rules are registered in `RuleEngine.rules` and run against every batch of events
 Design principles:
   • Simple rules > complex ML (explainable, debuggable, fast)
   • Every rule produces zero or more BusinessEvents
-  • Rules compose — they see the full event list, not just one at a time
+  • Rules compose -- they see the full event list, not just one at a time
   • Confidence scoring allows filtering noise
 """
 import re
@@ -20,20 +20,21 @@ from typing import List, Dict, Any
 
 from .signals import (
     BusinessEvent, Severity,
-    CLIENT_RISK, DEADLINE_RISK, SYSTEM_FAILURE,
+    CLIENT_RISK, DEADLINE_RISK,
     TEAM_BLOCKER, REVENUE_RISK, COMMUNICATION_GAP, OPPORTUNITY_SIGNAL,
+    MEETING_RISK,
 )
 
-# ── Tunable thresholds ──────────────────────────────────────────────────────
-CLIENT_WAIT_URGENT_HOURS   = 4    # Hours without reply → URGENT
-CLIENT_WAIT_CRITICAL_HOURS = 12   # Hours without reply → CRITICAL
-PR_STALE_HOURS             = 24   # Hours for a PR to be "stale"
+# ── Tunable thresholds ------------------------------------------------------
+CLIENT_WAIT_URGENT_HOURS   = 4    # Hours without reply -> URGENT
+CLIENT_WAIT_CRITICAL_HOURS = 12   # Hours without reply -> CRITICAL
+DELIVERY_WAIT_HOURS        = 24   # Hours before a delivery item needs founder attention
 TASK_OVERDUE_HOURS         = 0    # Any overdue = immediate URGENT
 INVOICE_KEYWORDS = {"invoice", "payment", "refund", "billing", "overdue", "outstanding", "owe"}
 OPPORTUNITY_KEYWORDS = {"shipped", "launched", "closed", "signed", "approved", "milestone", "congrats"}
 
 
-# ── Individual rule functions ─────────────────────────────────────────────────
+# ── Individual rule functions ------------------------------------------------─
 
 def rule_client_risk(events: List[Dict]) -> List[BusinessEvent]:
     """
@@ -54,7 +55,7 @@ def rule_client_risk(events: List[Dict]) -> List[BusinessEvent]:
             signal_type = CLIENT_RISK,
             severity    = sev,
             message     = f"{client or 'A client'} has been waiting {age:.0f} hours for a response.",
-            action      = f"Reply to {client or 'client'} now — risk of losing trust increases with every hour.",
+            action      = f"Reply to {client or 'client'} now -- risk of losing trust increases with every hour.",
             source      = e.get("source", ""),
             client      = client,
             age_hours   = age,
@@ -90,50 +91,24 @@ def rule_deadline_risk(events: List[Dict]) -> List[BusinessEvent]:
     return results
 
 
-def rule_system_failure(events: List[Dict]) -> List[BusinessEvent]:
-    """
-    Detects services that are DOWN from the health check connector.
-    """
-    results = []
-    for e in events:
-        if e.get("source") != "health_check":
-            continue
-        status = e.get("status", "") or ""
-        content = e.get("content", "")
-        if "DOWN" not in status.upper() and "DOWN" not in content.upper():
-            continue
-        service = e.get("url") or e.get("content", "Unknown service")
-        results.append(BusinessEvent(
-            signal_type = SYSTEM_FAILURE,
-            severity    = Severity.CRITICAL,
-            message     = f"Service is DOWN: {service}",
-            action      = "Alert your engineering lead immediately. Check status page and notify affected clients.",
-            source      = "health_check",
-            age_hours   = e.get("age_hours", 0.0),
-            confidence  = 1.0,
-            raw_content = content,
-        ))
-    return results
-
-
 def rule_team_blocker(events: List[Dict]) -> List[BusinessEvent]:
     """
-    Detects stale GitHub PRs that are blocking team velocity.
+    Detects delivery items that may block customer-facing commitments.
     """
     results = []
     for e in events:
         if e.get("type") not in ("pr_stale", "issue_open"):
             continue
         age   = e.get("age_hours", 0.0)
-        if age < PR_STALE_HOURS:
+        if age < DELIVERY_WAIT_HOURS:
             continue
-        title = _extract_title(e.get("content", "")) or "untitled PR/issue"
+        title = _extract_title(e.get("content", "")) or "untitled delivery item"
         sev   = Severity.CRITICAL if age > 72 else Severity.URGENT
         results.append(BusinessEvent(
             signal_type = TEAM_BLOCKER,
             severity    = sev,
-            message     = f"'{title}' has been stale for {age:.0f} hours — blocking team progress.",
-            action      = f"Review '{title}' today: merge, close, or assign a reviewer.",
+            message     = f"Customer-facing delivery item '{title}' has been waiting {age:.0f} hours.",
+            action      = f"Confirm whether '{title}' affects a client promise; assign an owner today.",
             source      = e.get("source", ""),
             age_hours   = age,
             confidence  = 0.85,
@@ -158,7 +133,7 @@ def rule_revenue_risk(events: List[Dict]) -> List[BusinessEvent]:
             signal_type = REVENUE_RISK,
             severity    = Severity.CRITICAL,
             message     = f"Revenue signal detected: '{title}'" + (f" from {client}" if client else ""),
-            action      = "Handle this immediately — payment issues left unaddressed become lost revenue.",
+            action      = "Handle this immediately -- payment issues left unaddressed become lost revenue.",
             source      = e.get("source", ""),
             client      = client,
             age_hours   = age,
@@ -175,7 +150,7 @@ def rule_communication_gap(events: List[Dict]) -> List[BusinessEvent]:
     """
     results = []
     already_flagged_clients = set()
-    # First pass — collect clients already caught by client_risk rule
+    # First pass -- collect clients already caught by client_risk rule
     for e in events:
         if e.get("type") in ("client_message", "client_email") and e.get("age_hours", 0) >= CLIENT_WAIT_URGENT_HOURS:
             already_flagged_clients.add(e.get("client", ""))
@@ -208,7 +183,7 @@ def rule_communication_gap(events: List[Dict]) -> List[BusinessEvent]:
 
 def rule_opportunity_signal(events: List[Dict]) -> List[BusinessEvent]:
     """
-    Detects positive signals — shipped features, signed deals, milestones.
+    Detects positive signals -- shipped features, signed deals, milestones.
     These inform the daily summary and help founders celebrate wins.
     """
     results = []
@@ -230,44 +205,70 @@ def rule_opportunity_signal(events: List[Dict]) -> List[BusinessEvent]:
     return results
 
 
-# ── Helper extractors ─────────────────────────────────────────────────────────
+# ── Helper extractors ---------------------------------------------------------
 
 def _extract_name(text: str) -> str:
     m = re.search(r"(client|customer|from)[:\s]+([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)?)", text)
     return m.group(2) if m else ""
 
 def _extract_title(text: str) -> str:
-    """Pull quoted strings or PR/task names from content."""
+    """Pull quoted strings or task names from content."""
     m = re.search(r"'([^']{3,60})'|\"([^\"]{3,60})\"", text)
     if m:
         return m.group(1) or m.group(2)
     # Fall back: first 60 chars stripped of leading labels
-    cleaned = re.sub(r"^(Email from|Notion task|PR #\d+:|Issue #\d+:)\s*", "", text, flags=re.IGNORECASE)
+    cleaned = re.sub(r"^(Email from|Notion task|Delivery item|Delivery issue|Issue #\d+:)\s*", "", text, flags=re.IGNORECASE)
     return cleaned[:60].strip()
 
 
-# ── Rule Engine ────────────────────────────────────────────────────────────────
+def rule_meeting_risk(events: List[Dict]) -> List[BusinessEvent]:
+    """
+    Detects important calendar meetings that need prep or have risks.
+    """
+    results = []
+    for e in events:
+        if e.get("type") != "meeting":
+            continue
+        content = e.get("content", "")
+        # Only flag if it's high intensity (e.g. client name mentioned or "urgent")
+        if not any(kw in content.lower() for kw in ["client", "investor", "demo", "proposal", "urgent", "important"]):
+            continue
+        
+        results.append(BusinessEvent(
+            signal_type = MEETING_RISK,
+            severity    = Severity.URGENT,
+            message     = f"Meeting Prep: {content[:60]}",
+            action      = "Confirm agenda and review attendee history before this meeting.",
+            source      = e.get("source", ""),
+            age_hours   = e.get("age_hours", 0.0),
+            confidence  = 0.85,
+            raw_content = content,
+        ))
+    return results
+
+
+# ── Rule Engine ---------------------------------------------------------------─
 
 class Classifier:
     """
     The Founder Brain.
 
     Runs a registry of business rules over processed events and returns
-    a prioritised list of BusinessEvents — structured decisions, not raw data.
+    a prioritised list of BusinessEvents -- structured decisions, not raw data.
 
     Usage:
         classifier = Classifier()
         business_events = classifier.analyze(processed_events)
     """
 
-    # Rule registry — add new rules here
+    # Rule registry -- add new rules here
     RULES = [
-        rule_system_failure,       # Highest priority (infrastructure)
         rule_revenue_risk,         # Revenue always critical
         rule_client_risk,          # Client relationship risk
         rule_deadline_risk,        # Deadline & task risk
         rule_team_blocker,         # Team velocity
         rule_communication_gap,    # Softer communication signals
+        rule_meeting_risk,          # Calendar & meeting risks
         rule_opportunity_signal,   # Positive wins (for daily summary)
     ]
 
@@ -281,7 +282,7 @@ class Classifier:
 
         # Keywords from blueprint
         if any(kw in content for kw in ["delay", "overdue", "late", "missed"]): score += 2.0
-        if any(kw in content for kw in ["error", "failure", "crash", "down"]): score += 3.0
+        if any(kw in content for kw in ["blocked", "stalled", "cannot launch", "cannot ship"]): score += 3.0
         if any(kw in content for kw in ["unhappy", "angry", "complaint", "lost"]): score += 3.0
         if any(kw in content for kw in ["invoice", "payment", "billing"]): score += 2.0
 
@@ -305,7 +306,7 @@ class Classifier:
                 filtered = [e for e in detected if e.confidence >= self.min_confidence]
                 all_events.extend(filtered)
             except Exception as ex:
-                print(f"⚠️  Rule '{rule.__name__}' failed: {ex}")
+                print(f"[!]  Rule '{rule.__name__}' skipped: {ex}")
 
         # 2. Run scoring for "general" events that might have been missed
         for e in processed_events:
@@ -317,7 +318,7 @@ class Classifier:
                         signal_type = "scored_signal",
                         severity    = sev,
                         message     = f"Scored signal: {e.get('content')[:60]}...",
-                        action      = "Review this signal — reached risk threshold of " + str(score),
+                        action      = "Review this signal -- reached risk threshold of " + str(score),
                         source      = e.get("source", "unknown"),
                         age_hours   = e.get("age_hours", 0.0),
                         confidence  = score / 10.0,
@@ -336,7 +337,7 @@ class Classifier:
         _order = {Severity.CRITICAL: 0, Severity.URGENT: 1, Severity.INFO: 2}
         unique_events.sort(key=lambda x: _order.get(x.severity, 3))
 
-        print(f"🧠 Intelligence Layer: {len(unique_events)} business signals detected "
+        print(f"[BRAIN] Intelligence Layer: {len(unique_events)} business signals detected "
               f"(Confidence Breakdown: {sum(1 for e in unique_events if e.confidence >= 0.9)} HIGH, "
               f"{sum(1 for e in unique_events if e.confidence >= 0.75)} MEDIUM)")
 

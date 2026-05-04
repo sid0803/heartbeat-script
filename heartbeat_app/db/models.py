@@ -63,6 +63,42 @@ class DatabaseManager:
         conn.commit()
         conn.close()
 
+    def get_connector_config(self, user_id: int, connector_type: str):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT config_json, is_active FROM connector_configs WHERE user_id = ? AND connector_type = ?',
+            (user_id, connector_type)
+        )
+        row = cursor.fetchone()
+        conn.close()
+        if not row:
+            return None
+        import json
+        return {"config": json.loads(row[0]), "is_active": bool(row[1])}
+
+    def upsert_connector_config(self, user_id: int, connector_type: str, config: dict, is_active: int = 1):
+        import json
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT id FROM connector_configs WHERE user_id = ? AND connector_type = ?',
+            (user_id, connector_type)
+        )
+        row = cursor.fetchone()
+        if row:
+            cursor.execute(
+                'UPDATE connector_configs SET config_json = ?, is_active = ? WHERE id = ?',
+                (json.dumps(config), is_active, row[0])
+            )
+        else:
+            cursor.execute(
+                'INSERT INTO connector_configs (user_id, connector_type, config_json, is_active) VALUES (?, ?, ?, ?)',
+                (user_id, connector_type, json.dumps(config), is_active)
+            )
+        conn.commit()
+        conn.close()
+
     def get_last_24h_digests(self, user_id: int) -> list:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -76,10 +112,9 @@ class DatabaseManager:
         conn = self._get_conn()
         cursor = conn.cursor()
         
-        # Add mock Slack, Health, and Notion configs
+        # Add mock founder-facing connector configs
         mocks = [
             ("slack", {"channel_ids": ["C12345", "C67890"], "token": "xoxb-mock-token"}),
-            ("health", {"endpoints": ["https://api.myapp.com/health", "https://app.myapp.com"]}),
             ("notion", {"database_id": "mock-db-id", "token": "secret_mock_notion"}),
             ("git", {"repo_path": "."})
         ]

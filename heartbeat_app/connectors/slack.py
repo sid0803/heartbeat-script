@@ -3,11 +3,11 @@ from typing import List, Dict, Any
 from .base import BaseConnector
 
 _MOCK_MESSAGES = [
-    {"text": "Client ABC: The deadline is this Friday — are we on track?",  "client": "ABC Corp",    "age_hours": 3.2,  "priority": "high"},
+    {"text": "Client ABC: The deadline is this Friday -- are we on track?",  "client": "ABC Corp",    "age_hours": 3.2,  "priority": "high"},
     {"text": "Client XYZ: Can we schedule a call to discuss the proposal?",  "client": "XYZ Ltd",     "age_hours": 8.0,  "priority": "high"},
     {"text": "Team: Weekly sync is moved to 4pm today.",                     "client": "",            "age_hours": 1.0,  "priority": "low"},
-    {"text": "Client Beta: Invoice #1038 — when can we expect the refund?",  "client": "Beta Inc",    "age_hours": 26.0, "priority": "high"},
-    {"text": "Dev Team: Fixed the auth bug, PR is up for review.",           "client": "",            "age_hours": 0.5,  "priority": "low"},
+    {"text": "Client Beta: Invoice #1038 -- when can we expect the refund?",  "client": "Beta Inc",    "age_hours": 26.0, "priority": "high"},
+    {"text": "Delivery Team: Customer auth fix is ready for review.",        "client": "",            "age_hours": 0.5,  "priority": "low"},
 ]
 
 
@@ -18,6 +18,7 @@ class SlackConnector(BaseConnector):
     """
 
     def __init__(self, token: str, channel_ids: List[str], lookback_hours: int = 2):
+        super().__init__()
         self.token        = token if token and "xoxb-your" not in str(token) and token != "mock_token" else None
         self.channel_ids  = channel_ids
         self.lookback_hours = lookback_hours
@@ -62,13 +63,13 @@ class SlackConnector(BaseConnector):
     def fetch_data(self) -> List[Dict[str, Any]]:
         if self.token and self.channel_ids:
             try:
-                print(f"💬 Fetching live Slack messages from {len(self.channel_ids)} channels...")
+                print(f"[SLACK] Fetching live Slack messages from {len(self.channel_ids)} channels...")
                 return self._fetch_live()
             except Exception as e:
                 self.handle_error(e)
                 print("   Falling back to mock Slack data.")
 
-        print(f"💬 Slack not configured (channels: {self.channel_ids}) — using mock data.")
+        print(f"[SLACK] Slack not configured (channels: {self.channel_ids}) -- using mock data.")
         return [
             {
                 "source":    self.name,
@@ -81,4 +82,3 @@ class SlackConnector(BaseConnector):
             }
             for m in _MOCK_MESSAGES
         ]
-
