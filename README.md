@@ -3,17 +3,17 @@
 
 ### **From 100 Notifications → 1 Clear Decision**
 
-> Your **Personal AI Chief of Staff** that turns scattered signals (Slack, Gmail, GitHub, Notion) into a single, actionable executive brief.
+> Your **Personal AI Chief of Staff** that turns scattered signals (Slack, Gmail, Calendar, Notion, GitHub) into a single, actionable executive brief.
 
 ---
 
 ## 🧠 What is Heartbeat?
 
-**Heartbeat** is a **privacy-first, local intelligence system** that continuously scans your digital ecosystem and delivers:
+**Heartbeat** is a **privacy-first, local founder intelligence system** that continuously scans your deal and delivery context and delivers:
 
-* 🔴 Critical issues (revenue risk, system failure)
-* 🟡 Important follow-ups (delays, blockers)
-* ✅ Informational updates (low-priority changes)
+* 🔴 Critical deal risks (missed client replies, renewal risk, meeting conflicts)
+* 🟡 Important follow-ups (proposal delays, owner gaps, blocked commitments)
+* ✅ Informational updates (low-priority account or roadmap changes)
 
 👉 Every **30 minutes → 1 clear decision**
 
@@ -56,8 +56,11 @@ graph TD
         A2[Gmail]
         A3[GitHub]
         A4[Notion]
-        A5[System Logs]
+        A5[Calendar]
     end
+
+    Note[Calendar connector can be configured from the dashboard with provider, calendar ID, lookahead window, and active status]
+    Note --> A5
 
     subgraph Processing Layer
         B1[Event Engine]
@@ -103,9 +106,9 @@ graph TD
 
 * Slack → Urgent messages
 * Gmail → Revenue-risk emails
-* GitHub → PRs, issues
+* GitHub → Customer-facing delivery blockers
 * Notion → Tasks & roadmap
-* Logs → System health
+* Calendar → Client meetings and prep risk
 
 ---
 
@@ -121,8 +124,8 @@ graph TD
 * Assigns **Priority Score (0–10)**
 * Detects:
 
-  * 🚨 Failures
   * 💰 Revenue risks
+  * 📅 Meeting risks
   * ⏳ Delays
   * 🔗 Cross-source signals
 
@@ -160,10 +163,11 @@ graph TD
 
 ```mermaid
 graph LR
-    A[Crash / Failure] --> +3
-    B[Delay / Overdue] --> +2
-    C[Multi-source signal] --> CRITICAL
-    D[Older than 24h] --> +1
+    A[Client escalation] --> +3
+    B[Meeting conflict / prep gap] --> +3
+    C[Proposal or renewal delay] --> +2
+    D[Multi-source deal signal] --> CRITICAL
+    E[Older than 24h] --> +1
 ```
 
 ### Final Output:
@@ -178,17 +182,17 @@ graph LR
 
 ```txt
 🔴 CRITICAL:
-- Payment system failure detected (Slack + Gmail)
-- Impact: Revenue loss risk
+- Client ABC asked for revised pricing in Slack, and the renewal call is tomorrow morning.
+- Impact: Deal could stall if the founder joins without updated terms.
 
 🟡 WARNING:
-- GitHub PR #342 inactive for 48 hours
+- Proposal owner is unclear in Notion, and Gmail has an unanswered follow-up from the buyer.
 
 ✅ INFO:
-- Notion roadmap updated
+- Investor intro call was moved from 3:00 PM to 4:30 PM.
 
 👉 Recommended Action:
-Fix payment system immediately. Follow up with backend team.
+Send the pricing update today, assign proposal ownership, and prep the renewal call agenda before tomorrow morning.
 ```
 
 ---
@@ -290,13 +294,36 @@ npm run build
 
 ## 🧩 Supported Connectors
 
-| Tool   | Purpose                  |
-| ------ | ------------------------ |
-| Slack  | Team communication       |
-| Gmail  | Client & revenue signals |
-| GitHub | Dev workflow             |
-| Notion | Task tracking            |
-| Logs   | System monitoring        |
+| Tool     | Purpose                                           |
+| -------- | ------------------------------------------------- |
+| Slack    | Team communication and urgent customer signals    |
+| Gmail    | Client inbox, billing, and contract follow-ups    |
+| GitHub   | Delivery blockers tied to customer commitments    |
+| Notion   | Delivery status, overdue tasks, and timeline risk |
+| Calendar | Upcoming client meetings and deal timing          |
+
+## 🧠 Dashboard UI
+
+- Adds a dedicated **Today’s client schedule risk** panel in the dashboard.
+- Shows meeting conflicts, cancelled client calls, and prep risk separately from the digest.
+- Uses a new `/calendar` API route to keep schedule risk visible immediately.
+
+## 🔍 Why we scan each source
+
+- Slack: catches deal pressure early because customers and partners often ask urgent questions there before a formal email exists.
+- Gmail: protects revenue conversations such as renewals, invoices, contracts, pricing requests, and procurement follow-ups.
+- Calendar: shows whether the founder is prepared for the next revenue moment: client calls, renewal meetings, investor intros, and partner check-ins.
+- Notion: checks whether promised follow-ups have an owner and whether sales commitments are slipping after the meeting.
+- GitHub: only matters when product delivery affects a customer promise, launch date, pilot, or paid implementation.
+
+## ⚖️ Founder-first tradeoffs
+
+- Slack and Gmail are checked first because deal risk usually appears in customer messages before it appears in project tools. A buyer asking "Can we get this by Friday?" is more urgent to a BD founder than an internal task label.
+- Calendar is elevated because meetings create hard deadlines. A renewal call tomorrow, a double-booked investor intro, or a client meeting without an agenda should change what the founder does today.
+- Notion is useful for accountability, but only after the customer signal is known. It answers "who owns the follow-up?" and "is the promised deck/proposal/launch task slipping?"
+- GitHub is intentionally secondary for this audience. It is included only when delivery work maps to a customer-facing commitment such as a pilot launch, integration deadline, or paid implementation.
+- Technical noise is not part of the primary founder brief. Operational details are only useful when they are translated into a customer or revenue consequence.
+- Mock data keeps the demo understandable without every credential, but live Slack, Gmail, Calendar, Notion, and GitHub setup is required for accurate deal intelligence.
 
 ---
 
@@ -329,5 +356,3 @@ npm run build
 > Heartbeat gives you **clear decisions**
 
 ---
-
-

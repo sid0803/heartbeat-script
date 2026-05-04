@@ -3,16 +3,17 @@ connectors:
     channel_ids: ["C12345", "C67890"]
   notion:
     database_id: "abc-123"   # Your Notion database ID
-  health:
-    endpoints:
-      - "https://api.founderproject.com/health"
-      - "https://dashboard.founderproject.com"
   git:
     repo_path: "."            # Path to the project you want to monitor
   github:
     repo: ""                  # "owner/repo-name" e.g. "mycompany/main-app"
   gmail:
     credentials_path: "heartbeat_app/config/gmail_credentials.json"
+  calendar:
+    provider: "google"         # currently supports Google Calendar
+    calendar_id: "primary"     # use "primary" or a shared calendar id
+    credentials_path: "heartbeat_app/config/calendar_credentials.json"
+    lookahead_hours: 48
 
 delivery:
   preferred: "desktop"        # Options: desktop | slack | email | all
@@ -26,4 +27,3 @@ ai:
 
 timing:
   interval_minutes: 30
-

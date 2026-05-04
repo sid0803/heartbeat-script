@@ -1,14 +1,14 @@
 from heartbeat_app.core.config_manager import Config
 from heartbeat_app.connectors.slack import SlackConnector
-from heartbeat_app.connectors.health import HealthCheckConnector
 from heartbeat_app.connectors.git_conn import GitConnector
 from heartbeat_app.connectors.file_project import FileProjectConnector
 from heartbeat_app.connectors.gmail_conn import GmailConnector
 from heartbeat_app.connectors.github_conn import GitHubConnector
 from heartbeat_app.connectors.notion_conn import NotionConnector
+from heartbeat_app.connectors.calendar_conn import CalendarConnector
 from heartbeat_app.core.processor import EventProcessor
-from classifier import Classifier
-from summarizer import Summarizer
+from heartbeat_app.intelligence.classifier import Classifier
+from heartbeat_app.intelligence.summarizer import Summarizer
 from heartbeat_app.delivery.unified_notifier import UnifiedNotifier
 from heartbeat_app.core.scheduler import Scheduler
 from heartbeat_app.db.models import DatabaseManager
@@ -50,9 +50,6 @@ def run_heartbeat():
             token       = config.get_env("SLACK_TOKEN"),
             channel_ids = config.connectors.get("slack", {}).get("channel_ids", []),
         ),
-        HealthCheckConnector(
-            endpoints = config.connectors.get("health", {}).get("endpoints", []),
-        ),
         GitConnector(repo_path=project_path),
         FileProjectConnector(project_path=project_path),
         GmailConnector(),
@@ -63,6 +60,12 @@ def run_heartbeat():
         NotionConnector(
             token       = config.get_env("NOTION_TOKEN"),
             database_id = config.connectors.get("notion", {}).get("database_id", ""),
+        ),
+        CalendarConnector(
+            provider         = config.connectors.get("calendar", {}).get("provider", "google"),
+            credentials_path = config.connectors.get("calendar", {}).get("credentials_path"),
+            calendar_id      = config.connectors.get("calendar", {}).get("calendar_id", "primary"),
+            lookahead_hours  = config.connectors.get("calendar", {}).get("lookahead_hours", 48),
         ),
     ]
 
@@ -77,8 +80,8 @@ def run_heartbeat():
             if hasattr(conn, "errors"):
                 source_errors.extend(conn.errors)
         except Exception as e:
-            msg = f"Critical failure in {conn.name}: {e}"
-            print(f"❌ {msg}")
+            msg = f"{conn.name} data unavailable: {e}"
+            print(f"[X] {msg}")
             source_errors.append(msg)
 
     # 4. Normalise + enrich (Event Processor)
@@ -103,11 +106,11 @@ def run_heartbeat():
     # 8. Deliver
     notifier = _build_notifier(config)
     notifier.send(digest)
-    print("✅ Heartbeat cycle complete.")
+    print("[OK] Heartbeat cycle complete.")
 
 
 def run_daily_summary():
-    print("🌅 Triggering Daily Executive Summary...")
+    print("[SUN] Triggering Daily Executive Summary...")
     config = Config()
     db     = DatabaseManager()
 
@@ -117,7 +120,7 @@ def run_daily_summary():
 
     notifier = _build_notifier(config)
     notifier.send(daily_digest)
-    print("✅ Daily Executive Summary complete.")
+    print("[OK] Daily Executive Summary complete.")
 
 
 if __name__ == "__main__":

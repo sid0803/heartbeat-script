@@ -38,6 +38,7 @@ class NotionConnector(BaseConnector):
     """
 
     def __init__(self, token: str = None, database_id: str = None):
+        super().__init__()
         self.token       = token if token and "secret_your" not in str(token) else None
         self.database_id = database_id if database_id and "abc-123" not in str(database_id) else None
 
@@ -92,7 +93,7 @@ class NotionConnector(BaseConnector):
             events.append({
                 "source":    self.name,
                 "type":      "task_overdue",
-                "content":   f"Notion task '{title}' — Status: {status}, Due: {due}",
+                "content":   f"Notion task '{title}' -- Status: {status}, Due: {due}",
                 "priority":  "high" if age_h > 0 else "low",
                 "age_hours": age_h,
                 "timestamp": now - age_h * 3600,
@@ -102,18 +103,18 @@ class NotionConnector(BaseConnector):
     def fetch_data(self) -> List[Dict[str, Any]]:
         if self.token and self.database_id:
             try:
-                print("📝 Fetching Notion tasks...")
+                print("[NOTION] Fetching Notion tasks...")
                 return self._fetch_live()
             except Exception as e:
                 self.handle_error(e)
                 print("   Falling back to mock Notion data.")
 
-        print("📝 Notion token/database not configured — using mock data.")
+        print("[NOTION] Notion token/database not configured -- using mock data.")
         return [
             {
                 "source":    self.name,
                 "type":      "task_overdue",
-                "content":   f"Notion task '{t['title']}' — Status: {t['status']}, Assignee: {t['assignee']}, Due: {t['due']}",
+                "content":   f"Notion task '{t['title']}' -- Status: {t['status']}, Assignee: {t['assignee']}, Due: {t['due']}",
                 "priority":  t["priority"],
                 "age_hours": t["age_hours"],
                 "timestamp": time.time() - t["age_hours"] * 3600,

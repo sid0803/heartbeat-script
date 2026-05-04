@@ -6,19 +6,19 @@ from .base import BaseConnector
 _MOCK_DATA = [
     {
         "type": "pr_stale",
-        "content": "PR #42: 'Integrate payment gateway' — open for 3 days with no review",
+        "content": "Delivery item 'Integrate payment gateway' is waiting for review and may affect a paid implementation",
         "priority": "high",
         "age_hours": 72.0,
     },
     {
         "type": "pr_stale",
-        "content": "PR #38: 'Fix auth bug' — waiting for 2 approvals, stale since yesterday",
+        "content": "Delivery item 'Fix auth blocker' is waiting for approval before the customer rollout",
         "priority": "high",
         "age_hours": 26.0,
     },
     {
         "type": "issue_open",
-        "content": "Issue #55: 'API rate limit errors in production' — opened 5 hours ago, no assignee",
+        "content": "Customer rollout blocker 'rate limit during onboarding' is open with no owner",
         "priority": "high",
         "age_hours": 5.0,
     },
@@ -27,11 +27,12 @@ _MOCK_DATA = [
 
 class GitHubConnector(BaseConnector):
     """
-    Fetches open PRs and stale issues from a GitHub repository via REST API.
+    Fetches customer-facing delivery blockers from a GitHub repository via REST API.
     Falls back to mock data when token is absent or repo not configured.
     """
 
     def __init__(self, token: str = None, repo: str = None):
+        super().__init__()
         # token: personal access token from GITHUB_TOKEN env var
         # repo:  "owner/repo-name"
         self.token = token if token and "your-key" not in str(token) and "ghp_your" not in str(token) else None
@@ -50,8 +51,8 @@ class GitHubConnector(BaseConnector):
         resp.raise_for_status()
         events = []
         now = time.time()
-        for pr in resp.json():
-            created_at = pr.get("created_at", "")
+        for pull in resp.json():
+            created_at = pull.get("created_at", "")
             import datetime
             try:
                 dt = datetime.datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%SZ").replace(
@@ -62,7 +63,7 @@ class GitHubConnector(BaseConnector):
             events.append({
                 "source":    self.name,
                 "type":      "pr_stale",
-                "content":   f"PR #{pr['number']}: '{pr['title']}' — open for {age_h:.0f}h",
+                "content":   f"Delivery item '{pull['title']}' has been waiting {age_h:.0f}h",
                 "priority":  "high" if age_h > 24 else "low",
                 "age_hours": age_h,
                 "timestamp": now - age_h * 3600,
@@ -89,7 +90,7 @@ class GitHubConnector(BaseConnector):
             events.append({
                 "source":    self.name,
                 "type":      "issue_open",
-                "content":   f"Issue #{issue['number']}: '{issue['title']}' — {age_h:.0f}h old",
+                "content":   f"Delivery issue '{issue['title']}' has been open {age_h:.0f}h",
                 "priority":  "high" if issue.get("labels") else "low",
                 "age_hours": age_h,
                 "timestamp": now - age_h * 3600,
@@ -99,13 +100,13 @@ class GitHubConnector(BaseConnector):
     def fetch_data(self) -> List[Dict[str, Any]]:
         if self.token and self.repo:
             try:
-                print(f"🐙 Fetching GitHub data for {self.repo}...")
+                print(f"[GITHUB] Fetching GitHub data for {self.repo}...")
                 return self._fetch_prs() + self._fetch_issues()
             except Exception as e:
                 self.handle_error(e)
                 print("   Falling back to mock GitHub data.")
 
-        print("🐙 GitHub token/repo not configured — using mock data.")
+        print("[GITHUB] GitHub token/repo not configured -- using mock data.")
         return [
             {
                 "source":    self.name,

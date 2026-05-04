@@ -14,10 +14,10 @@ from typing import Optional, Dict, Any
 
 CLIENT_RISK          = "client_risk"         # Client waiting, unhappy, or about to churn
 DEADLINE_RISK        = "deadline_risk"       # Task/milestone overdue or at risk
-SYSTEM_FAILURE       = "system_failure"      # Service down or degraded
-TEAM_BLOCKER         = "team_blocker"        # PR/task blocking team progress
+TEAM_BLOCKER         = "team_blocker"        # Delivery item blocking a customer promise
 REVENUE_RISK         = "revenue_risk"        # Invoice, payment, or billing issue
 COMMUNICATION_GAP    = "communication_gap"   # No reply from founder/team in critical window
+MEETING_RISK         = "meeting_risk"        # Important calendar or client meeting risk
 OPPORTUNITY_SIGNAL   = "opportunity_signal"  # Positive signal — milestone, good news
 
 
@@ -32,11 +32,11 @@ class Severity:
 ACTION_TEMPLATES = {
     CLIENT_RISK:       "Reply to {client} immediately — {age_hours}h without response risks churn.",
     DEADLINE_RISK:     "Review and unblock '{title}' — it's {age_hours}h overdue.",
-    SYSTEM_FAILURE:    "Alert engineering: {service} is DOWN. Check status page.",
-    TEAM_BLOCKER:      "Review '{title}' to unblock the team — it's been stale {age_hours}h.",
+    TEAM_BLOCKER:      "Confirm whether '{title}' affects a customer promise and assign an owner.",
     REVENUE_RISK:      "Handle '{title}' urgently — there is a revenue implication.",
     COMMUNICATION_GAP: "Respond to '{client}' — {age_hours}h gap in communication.",
     OPPORTUNITY_SIGNAL:"Acknowledge milestone: '{title}'. Consider sharing with stakeholders.",
+    MEETING_RISK:       "Prepare for the meeting and confirm agenda, invitees, and follow-up.",
 }
 
 
@@ -62,6 +62,7 @@ class BusinessEvent:
     age_hours:    float = 0.0       # How long this signal has been active
     confidence:   float = 1.0       # 0.0–1.0 — how certain the rule is
     raw_content:  str = ""          # Original raw content for traceability
+    correlation_id: str = ""        # ID to group related signals across sources
     metadata:     Dict[str, Any] = field(default_factory=dict)
 
     def to_prompt_line(self) -> str:

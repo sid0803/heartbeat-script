@@ -4,6 +4,7 @@ from .base import BaseConnector
 
 class FileProjectConnector(BaseConnector):
     def __init__(self, project_path: str):
+        super().__init__()
         self.project_path = project_path
         self._ignore_dirs = {'.git', 'node_modules', '__pycache__', '.venv', 'env', 'dist', 'build'}
 

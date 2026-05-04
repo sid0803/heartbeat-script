@@ -26,7 +26,6 @@ pause(0.6)
 
 from heartbeat_app.core.config_manager import Config
 from heartbeat_app.connectors.slack import SlackConnector
-from heartbeat_app.connectors.health import HealthCheckConnector
 from heartbeat_app.connectors.git_conn import GitConnector
 from heartbeat_app.connectors.file_project import FileProjectConnector
 from heartbeat_app.connectors.gmail_conn import GmailConnector
@@ -48,7 +47,6 @@ sources = [
     ("📧 Gmail",          GmailConnector()),
     ("🐙 GitHub",         GitHubConnector()),
     ("📝 Notion",         NotionConnector()),
-    ("🏥 Health Checks",  HealthCheckConnector(endpoints=config.connectors.get("health",{}).get("endpoints",[]))),
     ("📁 Git History",    GitConnector(repo_path=repo_path)),
     ("🗂️  Project Files", FileProjectConnector(project_path=repo_path)),
 ]
@@ -109,8 +107,8 @@ step(4, 5, "Generating COO Decision Brief (Master Summarizer)")
 print(dim("  AI acting as your startup COO — using robust 🔴/🟡/✅ 3-tier format.\n"))
 pause(0.4)
 summarizer = Summarizer(provider="auto")
-# Simulate a mock source failure for the demo
-mock_errors = ["Critical failure in legacy_crm: Connection timeout"]
+# Simulate a missing source for the demo
+mock_errors = ["Calendar data unavailable: reconnect credentials"]
 digest = summarizer.summarize(business_events if business_events else events, source_errors=mock_errors)
 
 print(f"\n  {bold('━━━  YOUR 60-SECOND MASTER BRIEF  ━━━')}\n")
@@ -136,7 +134,7 @@ print("\n" + "═"*65)
 print(bold("  💓  MASTER DEMO COMPLETE"))
 print("═"*65)
 print(f"\n  {bold('What just happened (Master Hardening):')}")
-print(f"  1. Multi-source Ingestion with Source Failure tracking")
+print(f"  1. Multi-source ingestion with connector coverage tracking")
 print(f"  2. Advanced Deduplication (cross-source consolidation)")
 print(f"  3. Score-based Intelligence with Confidence Labeling")
 print(f"  4. 3-Tier Executive Briefing (🔴/🟡/✅)")

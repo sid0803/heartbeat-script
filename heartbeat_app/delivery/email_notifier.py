@@ -73,4 +73,4 @@ class EmailNotifier(BaseNotifier):
                 server.sendmail(self.smtp_user, self.smtp_to, msg.as_string())
             print(f"✅ Email digest sent to {self.smtp_to}")
         except Exception as e:
-            print(f"⚠️  Email send failed: {e}\nDigest:\n{message}")
+            print(f"⚠️  Email unavailable: {e}\nDigest:\n{message}")

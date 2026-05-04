@@ -3,7 +3,7 @@ import os
 from typing import List, Dict, Any
 from .base import BaseConnector
 
-# ── Mock data ─────────────────────────────────────────────────────────────────
+# ── Mock data ---------------------------------------------------------------──
 _MOCK_EMAILS = [
     {
         "subject": "Re: Project Timeline Update",
@@ -43,6 +43,7 @@ class GmailConnector(BaseConnector):
 
     def __init__(self, credentials_path: str = None,
                  max_results: int = 10):
+        super().__init__()
         if credentials_path is None:
             # Project root is two levels up from this file
             PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -96,7 +97,7 @@ class GmailConnector(BaseConnector):
             events.append({
                 "source":    self.name,
                 "type":      "client_email",
-                "content":   f"Email from {headers.get('From','Unknown')}: {headers.get('Subject','(no subject)')} — {snippet[:120]}",
+                "content":   f"Email from {headers.get('From','Unknown')}: {headers.get('Subject','(no subject)')} -- {snippet[:120]}",
                 "client":    headers.get("From", ""),
                 "priority":  "high" if age_hrs > 4 else "low",
                 "age_hours": age_hrs,
@@ -108,18 +109,18 @@ class GmailConnector(BaseConnector):
         import os
         if os.path.exists(self.credentials_path):
             try:
-                print("📧 Fetching live Gmail data...")
+                print("[GMAIL] Fetching live Gmail data...")
                 return self._fetch_live()
             except Exception as e:
                 self.handle_error(e)
                 print("   Falling back to mock Gmail data.")
 
-        print("📧 Gmail credentials not found — using mock data.")
+        print("[GMAIL] Gmail credentials not found -- using mock data.")
         return [
             {
                 "source":    self.name,
                 "type":      "client_email",
-                "content":   f"Email from {e['sender']}: {e['subject']} — {e['snippet']}",
+                "content":   f"Email from {e['sender']}: {e['subject']} -- {e['snippet']}",
                 "client":    e["client"],
                 "priority":  e["priority"],
                 "age_hours": e["age_hours"],
